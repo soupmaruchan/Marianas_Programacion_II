@@ -43,7 +43,7 @@ def asegurar_carpeta_Reportes_0_0():
 
 
 # ==================================================
-# CLASE 1 - ANALIZADOR DE CALIFICACIONES
+#  ANALIZADOR DE CALIFICACIONES
 # ==================================================
 
 class AnalizadorCalificaciones:
@@ -127,7 +127,7 @@ class AnalizadorCalificaciones:
 
 
 # ==================================================
-# CLASE 2 - ANALIZADOR DE TEMPERATURAS
+# ANALIZADOR DE TEMPERATURAS
 # ==================================================
 
 class AnalizadorTemperaturas:
