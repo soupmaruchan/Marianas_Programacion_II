@@ -1,5 +1,5 @@
 """
-Proyecto 1: Calculadora Científica
+Proyecto 1: Calculadora 
 Carrera: Creatividad Digital
 Equipo: 
 Elena Yaretzi Ochoa Jarillo
@@ -12,6 +12,7 @@ Esthela Naomi Orozco Leal
 import os
 from datetime import datetime
 import csv
+import json
 
 # ==============================
 # COLORSITOS
@@ -48,11 +49,12 @@ def validar_numero(mensaje):
 
 def guardar_historial():
     """
-    Guarda el historial en archivo.
+    Guarda el historial en archivo en formato JSON.
+    Se usa JSON porque ahora guardamos diccionarios,
+    no texto plano.
     """
     with open(RUTA_HISTORIAL, "w", encoding="utf-8") as archivo:
-        for registro in HISTORIAL:
-            archivo.write(registro + "\n")
+        json.dump(HISTORIAL, archivo, indent=4)
 
 def cargar_historial():
     """
@@ -60,31 +62,46 @@ def cargar_historial():
     """
     if os.path.exists(RUTA_HISTORIAL):
         with open(RUTA_HISTORIAL, "r", encoding="utf-8") as archivo:
-            for linea in archivo:
-                HISTORIAL.append(linea.strip())
+            try:
+                datos = json.load(archivo)
+                HISTORIAL.extend(datos)
+            except:
+                pass  # Si el archivo está vacío o corrupto, no rompe el programa
 
-def agregar_historial(operacion):
+def agregar_historial(operacion, num1, num2, resultado):
     """
-    Agrega operación al historial (máx 10).
+    Agrega una operación al historial pues en un formato mas estructurado, agregamos diccionarios aqui.
     """
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    registro = f"{fecha} | {operacion}"
-    HISTORIAL.append(registro)
 
+    registro = {
+        "fecha": fecha,
+        "operacion": operacion,
+        "num1": num1,
+        "num2": num2,
+        "resultado": resultado
+    }
+
+    HISTORIAL.append(registro)
+  # Limite del historial
     if len(HISTORIAL) > 10:
         HISTORIAL.pop(0)
 
 def mostrar_historial():
     """
-    Muestra historial formateado.
+    Muestra el historial formateado de manera bonita.
     """
     if not HISTORIAL:
         print("No hay operaciones registradas.")
         return
 
-    print("\n--- HISTORIAL ---")
+    print(f"{Colores.AZUL}--- HISTORIAL ---{Colores.FIN}")
     for registro in HISTORIAL:
-        print(registro)
+        print(
+            f"{registro['fecha']} | "
+            f"{registro['num1']} {registro['operacion']} {registro['num2']} = "
+            f"{registro['resultado']}"
+        )
 
 # ==============================
 # CALCULADORA BÁSICA
