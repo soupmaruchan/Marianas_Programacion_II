@@ -174,7 +174,7 @@ def menu_calculadora_basica():
 
         operacion = f"{a} {simbolo} {b} = {resultado}"
         print(f"Resultado: {Colores.VERDE}{operacion}{Colores.FIN}")
-        agregar_historial(operacion)
+        agregar_historial(nombre, valor, None, resultado)
 # ==============================
 # CONVERSOR DE UNIDADES
 # ==============================
@@ -220,7 +220,7 @@ def menu_conversor_unidades():
 
         operacion = f"{valor} {unidad_origen} → {resultado} {unidad_destino}"
         print(f"Resultado: {Colores.VERDE}{operacion}{Colores.FIN}")
-        agregar_historial(operacion)
+        agregar_historial(nombre, valor, None, resultado)
 
 # ==============================
 # SISTEMAS NUMÉRICOS
@@ -286,7 +286,7 @@ def menu_sistemas_numericos():
 
             operacion = f"{nombre}: {numero} → {resultado}"
             print(f"Resultado: {Colores.VERDE}{operacion}{Colores.FIN}")
-            agregar_historial(operacion)
+            agregar_historial(nombre, valor, None, resultado)
 
         except ValueError:
             print(f"{Colores.ROJO}Error: Número inválido para esa conversión.{Colores.FIN}")
