@@ -301,16 +301,15 @@ def estadisticas_historial():
     print(f"{Colores.AZUL}--- ESTADÍSTICAS ---{Colores.FIN}")
     print(f"Total de operaciones: {len(HISTORIAL)}")
 
-    resultados = []
-
+resultados = []
+    
 for registro in HISTORIAL:
     resultado = registro["resultado"]
 
     # Solo agregamos si es número
     if isinstance(resultado, (int, float)):
         resultados.append(resultado)
-
-    if resultados:
+if resultados:
         promedio = sum(resultados) / len(resultados)
         print(f"{Colores.VERDE}Promedio de resultados numéricos: {round(promedio,2)}{Colores.FIN}")
 
