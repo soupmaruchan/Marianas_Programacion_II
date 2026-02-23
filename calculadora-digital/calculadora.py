@@ -97,11 +97,10 @@ def mostrar_historial():
 
     print(f"{Colores.AZUL}--- HISTORIAL ---{Colores.FIN}")
     for registro in HISTORIAL:
-        print(
-            f"{registro['fecha']} | "
-            f"{registro['num1']} {registro['operacion']} {registro['num2']} = "
-            f"{registro['resultado']}"
-        )
+        if registro["num2"] is not None:
+            print(f"{registro['fecha']} | {registro['num1']} {registro['operacion']} {registro['num2']} = {registro['resultado']}")
+        else:
+            print(f"{registro['fecha']} | {registro['operacion']} | {registro['num1']} → {registro['resultado']}")
 
 # ==============================
 # CALCULADORA BÁSICA
@@ -174,7 +173,7 @@ def menu_calculadora_basica():
 
         operacion = f"{a} {simbolo} {b} = {resultado}"
         print(f"Resultado: {Colores.VERDE}{operacion}{Colores.FIN}")
-        agregar_historial(nombre, valor, None, resultado)
+        agregar_historial(simbolo, a, b, resultado)
 # ==============================
 # CONVERSOR DE UNIDADES
 # ==============================
@@ -286,7 +285,7 @@ def menu_sistemas_numericos():
 
             operacion = f"{nombre}: {numero} → {resultado}"
             print(f"Resultado: {Colores.VERDE}{operacion}{Colores.FIN}")
-            agregar_historial(nombre, valor, None, resultado)
+            agregar_historial(nombre, numero, None, resultado)
 
         except ValueError:
             print(f"{Colores.ROJO}Error: Número inválido para esa conversión.{Colores.FIN}")
@@ -304,13 +303,12 @@ def estadisticas_historial():
 
     resultados = []
 
-    for registro in HISTORIAL:
-        try:
-            partes = registro.split("=")
-            resultado = float(partes[-1])
-            resultados.append(resultado)
-        except:
-            continue
+for registro in HISTORIAL:
+    resultado = registro["resultado"]
+
+    # Solo agregamos si es número
+    if isinstance(resultado, (int, float)):
+        resultados.append(resultado)
 
     if resultados:
         promedio = sum(resultados) / len(resultados)
@@ -327,9 +325,8 @@ def grafico_frecuencia():
     conteo = {}
 
     for registro in HISTORIAL:
-        operacion = registro.split("|")[1].strip()
-        clave = operacion.split(" ")[1] if " " in operacion else "Conversion"
-        conteo[clave] = conteo.get(clave, 0) + 1
+        operacion = registro["operacion"]
+        conteo[operacion] = conteo.get(operacion, 0) + 1
 
     print(f"\n{Colores.AZUL}--- FRECUENCIA DE OPERACIONES ---{Colores.FIN}")
 
@@ -340,20 +337,30 @@ def grafico_frecuencia():
 # PS EL CSV
 # -------------------------
 def exportar_csv():
+    """
+    Exporta el historial (formato diccionario) a CSV.
+    """
     if not HISTORIAL:
-        print("No hay datos para exportar.")
+        print(f"{Colores.ROJO}No hay datos para exportar.{Colores.FIN}")
         return
 
     with open("datos/historial.csv", "w", newline="", encoding="utf-8") as archivo:
         writer = csv.writer(archivo)
-        writer.writerow(["Fecha", "Operacion"])
 
+        # Encabezados
+        writer.writerow(["Fecha", "Operacion", "Num1", "Num2", "Resultado"])
+
+        # Escribir cada registro del historial
         for registro in HISTORIAL:
-            partes = registro.split("|")
-            if len(partes) == 2:
-                writer.writerow([partes[0].strip(), partes[1].strip()])
+            writer.writerow([
+                registro["fecha"],
+                registro["operacion"],
+                registro["num1"],
+                registro["num2"],
+                registro["resultado"]
+            ])
 
-    print(f"{Colores.VERDE}Historial exportado a datos/historial.csv{Colores.FIN}")
+    print(f"{Colores.VERDE}Historial exportado correctamente a datos/historial.csv{Colores.FIN}")
 
 # ==============================
 # MENÚ PRINCIPAL
