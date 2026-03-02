@@ -324,27 +324,43 @@ def menu_sistemas_numericos():
 
 def estadisticas_historial():
     if not HISTORIAL:
-        print("No hay datos para analizar.")
+        print(f"{Colores.ROJO}No hay datos para analizar.{Colores.FIN}")
         return
-    print(f"{Colores.AZUL}--- ESTADÍSTICAS ---{Colores.FIN}")
-    print(f"Total de operaciones: {len(HISTORIAL)}")
-    
-    resultados = []
-    
-    for registro in HISTORIAL:
-        resultado = registro.get("resultado")
-        
-        if isinstance(resultado, (int, float)):
-            resultados.append(resultado)
 
-    if resultados:
-        promedio = sum(resultados) / len(resultados)
+    print(f"{Colores.AZUL}--- ESTADÍSTICAS CON PANDAS ---{Colores.FIN}")
+
+    # Convertimos el historial (lista de diccionarios) a DataFrame
+    df = pd.DataFrame(HISTORIAL)
+
+    print(f"Total de operaciones: {len(df)}")
+
+    # Solo analizamos resultados numéricos
+    df_numericos = df[pd.to_numeric(df["resultado"], errors="coerce").notnull()]
+
+    if not df_numericos.empty:
+        promedio = df_numericos["resultado"].mean()
+        maximo = df_numericos["resultado"].max()
+        minimo = df_numericos["resultado"].min()
+
         print(f"{Colores.VERDE}Promedio: {round(promedio,2)}{Colores.FIN}")
-        print(f"Mínimo: {min(resultados)}")
-        print(f"Máximo: {max(resultados)}")
+        print(f"{Colores.VERDE}Máximo: {maximo}{Colores.FIN}")
+        print(f"{Colores.VERDE}Mínimo: {minimo}{Colores.FIN}")
     else:
-        print("No hay resultados numéricos para calcular estadísticas.")
+        print("No hay resultados numéricos para analizar.")
 
+def generar_grafica():
+    if not HISTORIAL:
+        print(f"{Colores.ROJO}No hay datos para graficar.{Colores.FIN}")
+        return
+
+    df = pd.DataFrame(HISTORIAL)
+
+    df["resultado"].plot(kind="line")
+    plt.title("Resultados del Historial")
+    plt.xlabel("Operaciones")
+    plt.ylabel("Resultado")
+
+    plt.show()
 # -------------------------
 # GRÁFICO ASCII DE FRECUENCIA
 # -------------------------
