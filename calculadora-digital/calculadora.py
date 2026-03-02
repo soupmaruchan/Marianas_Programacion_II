@@ -13,8 +13,8 @@ import os
 from datetime import datetime
 import csv
 import json
-import pandas as pd
-import matplotlib.pyplot as plt
+import pandas as pd # type: ignore
+import matplotlib.pyplot as plt # type: ignore
 import math
 
 # ==============================
