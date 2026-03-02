@@ -13,6 +13,9 @@ import os
 from datetime import datetime
 import csv
 import json
+import pandas as pd
+import matplotlib.pyplot as plt
+import math
 
 # ==============================
 # COLORSITOS
@@ -31,7 +34,13 @@ class Colores:
 # ==============================
 
 HISTORIAL = []
-RUTA_HISTORIAL = "datos/historial.txt"
+RUTA_HISTORIAL = "datos/historial.json"
+
+# ==============================
+# SISTEMA DE USUARIOS
+# ==============================
+
+USUARIO_ACTUAL = None
 
 # ==============================
 # UTILIDADES GENERALES
@@ -53,6 +62,8 @@ def guardar_historial():
     Se usa JSON porque ahora guardamos diccionarios,
     no texto plano.
     """
+    os.makedirs("datos", exist_ok=True)
+
     with open(RUTA_HISTORIAL, "w", encoding="utf-8") as archivo:
         json.dump(HISTORIAL, archivo, indent=4)
 
@@ -67,6 +78,20 @@ def cargar_historial():
                 HISTORIAL.extend(datos)
             except:
                 pass  # Si el archivo está vacío o corrupto, no rompe el programa
+def login():
+    """
+    Permite registrar o ingresar usuario.
+    """
+    global USUARIO_ACTUAL
+
+    usuario = input("Ingrese su nombre de usuario: ")
+
+    if not usuario.strip():
+        print(f"{Colores.ROJO}Usuario inválido.{Colores.FIN}")
+        return login()
+
+    USUARIO_ACTUAL = usuario
+    print(f"{Colores.VERDE}Bienvenida {usuario}!{Colores.FIN}")
 
 def agregar_historial(operacion, num1, num2, resultado):
     """
@@ -75,6 +100,7 @@ def agregar_historial(operacion, num1, num2, resultado):
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     registro = {
+        "usuario": USUARIO_ACTUAL,
         "fecha": fecha,
         "operacion": operacion,
         "num1": num1,
@@ -134,6 +160,8 @@ OPERACIONES = {
     "4": ("División", dividir, "/"),
     "5": ("Módulo", lambda a, b: a % b, "%"),
     "6": ("Potencia", lambda a, b: a ** b, "^"),
+    "7": ("Factorial", lambda a, b: math.factorial(int(a)), "!"),
+    "8": ("Raíz Cuadrada", lambda a, b: math.sqrt(a), "√"),
 }
 
 CONVERSIONES = {
@@ -151,11 +179,11 @@ def menu_calculadora_basica():
 
         for clave, valor in OPERACIONES.items():
             print(f"{clave}. {valor[0]}")
-        print("7. Volver")
+        print("9. Volver")
 
         opcion = input(f"{Colores.AMARILLO}Seleccione una opción: {Colores.FIN}")
 
-        if opcion == "7":
+        if opcion == "9":
             break
 
         if opcion not in OPERACIONES:
@@ -300,18 +328,22 @@ def estadisticas_historial():
         return
     print(f"{Colores.AZUL}--- ESTADÍSTICAS ---{Colores.FIN}")
     print(f"Total de operaciones: {len(HISTORIAL)}")
-
-resultados = []
     
-for registro in HISTORIAL:
-    resultado = registro["resultado"]
+    resultados = []
+    
+    for registro in HISTORIAL:
+        resultado = registro.get("resultado")
+        
+        if isinstance(resultado, (int, float)):
+            resultados.append(resultado)
 
-    # Solo agregamos si es número
-    if isinstance(resultado, (int, float)):
-        resultados.append(resultado)
-if resultados:
+    if resultados:
         promedio = sum(resultados) / len(resultados)
-        print(f"{Colores.VERDE}Promedio de resultados numéricos: {round(promedio,2)}{Colores.FIN}")
+        print(f"{Colores.VERDE}Promedio: {round(promedio,2)}{Colores.FIN}")
+        print(f"Mínimo: {min(resultados)}")
+        print(f"Máximo: {max(resultados)}")
+    else:
+        print("No hay resultados numéricos para calcular estadísticas.")
 
 # -------------------------
 # GRÁFICO ASCII DE FRECUENCIA
@@ -337,7 +369,7 @@ def grafico_frecuencia():
 # -------------------------
 def exportar_csv():
     """
-    Exporta el historial (formato diccionario) a CSV.
+    Exporta el historial (formato diccionario) a CSV, inluyendo usuario.
     """
     if not HISTORIAL:
         print(f"{Colores.ROJO}No hay datos para exportar.{Colores.FIN}")
@@ -347,11 +379,12 @@ def exportar_csv():
         writer = csv.writer(archivo)
 
         # Encabezados
-        writer.writerow(["Fecha", "Operacion", "Num1", "Num2", "Resultado"])
+        writer.writerow(["Usuario", "Fecha", "Operacion", "Num1", "Num2", "Resultado"])
 
         # Escribir cada registro del historial
         for registro in HISTORIAL:
             writer.writerow([
+                registro["usuario"],
                 registro["fecha"],
                 registro["operacion"],
                 registro["num1"],
@@ -362,11 +395,88 @@ def exportar_csv():
     print(f"{Colores.VERDE}Historial exportado correctamente a datos/historial.csv{Colores.FIN}")
 
 # ==============================
+# ANÁLISIS CON PANDAS
+# ==============================
+
+def analisis_con_pandas():
+    """
+    Analiza el historial usado pandas.
+    """
+
+    if not HISTORIAL:
+        print(f"{Colores.ROJO}No hay datos para analizar.{Colores.FIN}")
+        return
+
+    df = pd.DataFrame(HISTORIAL)
+
+    print(f"{Colores.AZUL}--- ANÁLISIS CON PANDAS ---{Colores.FIN}")
+
+    print("\nOperaciones por usuario:")
+    print(df["usuario"].value_counts())
+
+    print("\nOperaciones más usadas:")
+    print(df["operacion"].value_counts())
+
+    # Solo resultados numéricos
+    df_numericos = df[pd.to_numeric(df["resultado"], errors="coerce").notnull()]
+    df_numericos["resultado"] = df_numericos["resultado"].astype(float)
+
+    if not df_numericos.empty:
+        print("\nEstadísticas de resultados:")
+        print(df_numericos["resultado"].describe())
+
+# ==============================
+# COMPARACIÓN ENTRE USUARIOS
+# ==============================
+
+def comparar_usuarios():
+    if not HISTORIAL:
+        print(f"{Colores.ROJO}No hay datos.{Colores.FIN}")
+        return
+
+    df = pd.DataFrame(HISTORIAL)
+
+    print(f"{Colores.AZUL}--- COMPARACIÓN DE USUARIOS ---{Colores.FIN}")
+
+    conteo = df["usuario"].value_counts()
+
+    for usuario, cantidad in conteo.items():
+        print(f"{Colores.VERDE}{usuario}: {cantidad} operaciones{Colores.FIN}")
+
+    usuario_top = conteo.idxmax()
+    print(f"\nUsuario más activo: {Colores.AMARILLO}{usuario_top}{Colores.FIN}")
+
+# ==============================
+# GRÁFICO REAL EN JPG
+# ==============================
+
+def generar_grafico_jpg():
+    if not HISTORIAL:
+        print(f"{Colores.ROJO}No hay datos.{Colores.FIN}")
+        return
+
+    df = pd.DataFrame(HISTORIAL)
+
+    conteo = df["operacion"].value_counts()
+
+    plt.figure()
+    conteo.plot(kind="bar")
+    plt.title("Frecuencia de Operaciones")
+    plt.xlabel("Operacion")
+    plt.ylabel("Cantidad")
+
+    plt.savefig("datos/grafico_operaciones.jpg")
+    plt.close()
+
+    print(f"{Colores.VERDE}Gráfico guardado en datos/grafico_operaciones.jpg{Colores.FIN}")
+
+# ==============================
 # MENÚ PRINCIPAL
 # ==============================
 
 def menu_principal():
     cargar_historial()
+    login()
 
     while True:
         print(Colores.HEADER + "="*50)
@@ -379,7 +489,10 @@ def menu_principal():
         print("5. Gráfico ASCII de frecuencia")
         print("6. Ver Historial")
         print("7. Historial a CSV")
-        print("8. Salir")
+        print("8. Análisis con Pandas")
+        print("9. Comparación de usuarios")
+        print("10. Generar gráfico JPG")
+        print("11. Salir")
 
         opcion = input(f"{Colores.AMARILLO}Seleccione una opción: {Colores.FIN}")
 
@@ -398,6 +511,12 @@ def menu_principal():
         elif opcion == "7":
             exportar_csv()
         elif opcion == "8":
+            analisis_con_pandas()
+        elif opcion == "9":
+            comparar_usuarios()
+        elif opcion == "10":
+            generar_grafico_jpg()
+        elif opcion == "11":
             guardar_historial()
             print("Guardando historial... Byes<3")
             break
